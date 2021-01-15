@@ -59,9 +59,8 @@ int main() {
 //                printf("%c", currentChar);
             }
             else {
-                if (stricmp(currentWord, keyword) == 0) {
+                if (stricmp(currentWord, keyword) == 0)
                     counter++;
-                }
 
                 strcpy(currentWord, "\0");
                 continue;
