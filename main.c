@@ -139,10 +139,6 @@ void display(struct node *heap) {
     }
 }
 
-struct fileInfo {
-    char fileName[50];
-    int recurrence;
-};
 
 int main() {
 
@@ -197,11 +193,13 @@ int main() {
                 strcat(currentWord, (char[2]) {(char) currentChar, '\0'});
 //                printf("%c", currentChar);
             } else {
+                if (currentChar == 39)
+                    continue;
+
                 if (stricmp(currentWord, keyword) == 0)
                     counter++;
 
                 strcpy(currentWord, "\0");
-                continue;
             }
 
         } while (currentChar != EOF);
@@ -216,7 +214,6 @@ int main() {
     }
 
     display(heap);
-
 
     return 0;
 }
