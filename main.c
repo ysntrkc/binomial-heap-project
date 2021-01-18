@@ -23,25 +23,6 @@ struct node *createNode(char *fileName, int wordRelScore) {
     return newNode;
 }
 
-void *swapNode(struct node *node1, struct node *node2) {
-    struct node tempNode;
-    tempNode = *node1;
-    *node1 = *node2;
-    *node2 = tempNode;
-}
-
-struct node *mergeBinomTrees(struct node *node1, struct node *node2) {
-    if (node1->wordRelScore > node2->wordRelScore)
-        swapNode(node1, node2);
-
-    node2->parent = node1;
-    node2->sibling = node1->child;
-    node1->child = node2;
-    node1->degree++;
-
-    return node1;
-}
-
 void linkBinomHeap(struct node *heap1, struct node *heap2) {
     heap1->parent = heap2;
     heap1->sibling = heap2->child;
