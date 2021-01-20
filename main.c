@@ -1,7 +1,10 @@
+// Yasin Tarakçı - 150118055
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
 
+// I define a struct that hold the binomial heaps.
 struct node {
     char fileName[50];
     int wordRelScore;
@@ -12,44 +15,46 @@ struct node {
     struct node *child;
 };
 
-struct node *Head;
-struct node *Head2;
+// I define these globally because I use them in some functions and main.
+struct node *HEAP;
+struct node *HEAP2;
 
+// This function creates the node with the given fileName and wordRelScore.
 struct node *createNode(char *fileName, int wordRelScore) {
-    struct node *newNode;
-    newNode = malloc(sizeof(struct node));
-    strcpy(newNode->fileName, fileName);
+    struct node *newNode;                  // First the program creates the template node.
+    newNode = malloc(sizeof(struct node)); // Here the program allocates the memory for the new node.
+    strcpy(newNode->fileName, fileName);   // In these two line the program copies the given values into the new node.
     newNode->wordRelScore = wordRelScore;
-    newNode->degree = 0;
+    newNode->degree = 0;                   // In these two line the program initializes these variables with the base case.
     newNode->parent = newNode->sibling = newNode->child = NULL;
-    return newNode;
+    return newNode;                        // At last the program returns the new created node.
 }
 
+// This function links the given two nodes.
 void linkBinomHeaps(struct node *heap1, struct node *heap2) {
-    heap1->parent = heap2;
-    heap1->sibling = heap2->child;
-    heap2->child = heap1;
-    heap2->degree = heap2->degree + 1;
+    heap1->parent = heap2;                 // The second node will be the parent of the first node.
+    heap1->sibling = heap2->child;         // The child of the second node will be the sibling of the first node.
+    heap2->child = heap1;                  // The first node will be the child of the second node.
+    heap2->degree = heap2->degree + 1;     // And finally, the degree of the second node increases by 1 because it has a new child.
 }
 
+// This function merges the given two nodes.
 struct node *mergeBinomHeaps(struct node *heap1, struct node *heap2) {
+    // At first I creates a lot of templates because the program will use all of them separately.
     struct node *tempHeap1, *tempHeap2;
     struct node *tempNode1, *tempNode2;
-    struct node *head;
+    struct node *heap;                     // This node will be the merged node.
 
+    // I do these because I don't want to change heap1 and heap2.
     tempHeap1 = heap1;
     tempHeap2 = heap2;
 
     if (tempHeap1 != NULL) {
         if (tempHeap2 != NULL && tempHeap1->degree <= tempHeap2->degree) {
-            head = tempHeap1;
-        } else if (tempHeap2 != NULL && tempHeap1->degree > tempHeap2->degree) {
-            head = tempHeap2;
-        } else {
-            head = tempHeap1;
-        }
+            heap = tempHeap1;
+        } else heap = tempHeap2 != NULL && tempHeap1->degree > tempHeap2->degree ? tempHeap2 : tempHeap1;
     } else {
-        head = tempHeap2;
+        heap = tempHeap2;
     }
 
     while (tempHeap1 != NULL && tempHeap2 != NULL) {
@@ -65,19 +70,21 @@ struct node *mergeBinomHeaps(struct node *heap1, struct node *heap2) {
             tempHeap2 = tempNode2;
         }
     }
-    return head;
+    return heap;
 }
 
+// This function creates a union heap from two heaps or insets the node to main heap.
 struct node *unionBinomHeaps(struct node *heap1, struct node *heap2) {
     struct node *prevNode, *nextNode, *currentNode;
 
-    Head = mergeBinomHeaps(heap1, heap2);
+    // At first, the program merges two heaps.
+    HEAP = mergeBinomHeaps(heap1, heap2);
 
-    if (Head == NULL)
-        return Head;
+    if (HEAP == NULL)
+        return HEAP;
 
     prevNode = NULL;
-    currentNode = Head;
+    currentNode = HEAP;
     nextNode = currentNode->sibling;
 
     while (nextNode != NULL) {
@@ -91,7 +98,7 @@ struct node *unionBinomHeaps(struct node *heap1, struct node *heap2) {
                 linkBinomHeaps(nextNode, currentNode);
             } else {
                 if (prevNode == NULL) {
-                    Head = nextNode;
+                    HEAP = nextNode;
                 } else {
                     prevNode->sibling = nextNode;
                 }
@@ -101,32 +108,27 @@ struct node *unionBinomHeaps(struct node *heap1, struct node *heap2) {
         }
         nextNode = currentNode->sibling;
     }
-    return Head;
+    return HEAP;
 }
 
-struct node *insertToBinomHeap(struct node *head, struct node *node) {
-    struct node *tempNode = NULL;
-    tempNode = node;
-    head = unionBinomHeaps(head, tempNode);
-    return head;
-}
-
-void revertList(struct node *heap) {
+// This function reverts the roots' list.
+void revertRootsList(struct node *heap) {
     if (heap->sibling != NULL) {
-        revertList(heap->sibling);
+        revertRootsList(heap->sibling);
         (heap->sibling)->sibling = heap;
     } else {
-        Head2 = heap;
+        HEAP2 = heap;
     }
 }
 
+// This function extracts the minimum wordRelScore node from heap and returns it.
 struct node *extractMinFromHeap(struct node *heap1) {
     struct node *minNode = heap1;
     struct node *tempNode = NULL;
     struct node *currentNode = heap1;
     struct node *tempNode2;
 
-    Head2 = NULL;
+    HEAP2 = NULL;
 
     if (currentNode == NULL) {
         printf("\nThere is no node to extract from heap.\n");
@@ -155,25 +157,28 @@ struct node *extractMinFromHeap(struct node *heap1) {
     }
 
     if (currentNode->child != NULL) {
-        revertList(currentNode->child);
+        revertRootsList(currentNode->child);
         (currentNode->child)->sibling = NULL;
     }
 
-    Head = unionBinomHeaps(heap1, Head2);
+    HEAP = unionBinomHeaps(heap1, HEAP2);
     return currentNode;
 }
 
-void printMostRelFiveFile(char *keyword) {
-    int fileCount = 0;
+// This function prints the most relevant 5 file or if there is no 5 relevant file, prints all relevant files.
+void printMostRelFiveFile(char *keyword, int fileCount) {
     for (int i = 0; i < 5; i++) {
-        struct node *minNode = extractMinFromHeap(Head);
+        // I use extractMinFromHeap() method for finding the most relevant node because I subtract the wordRelScore from 300.
+        struct node *mostRelNode = extractMinFromHeap(HEAP);
         char fileName[56] = "files/";
         char currentChar;
 
-        if (300 - minNode->wordRelScore == 0)
+        // If there is no relevant word then the program continues.
+        if (300 - mostRelNode->wordRelScore == 0)
             continue;
 
-        strcat(fileName, minNode->fileName);
+        // For open the file the program adds the folder's path to fileName.
+        strcat(fileName, mostRelNode->fileName);
         FILE *filePtr = fopen(fileName, "r");
 
         if (filePtr == NULL) {
@@ -181,32 +186,32 @@ void printMostRelFiveFile(char *keyword) {
             exit(0);
         }
         puts("\n--------------------------------------------------------------------------------------------------");
-        printf("In the '%s' named file there is %d keyword: '%s'.\n\n", minNode->fileName,
-               300 - minNode->wordRelScore, keyword);
+        printf("In the '%s' named file there is %d keyword: '%s'.\n\n", mostRelNode->fileName,
+               300 - mostRelNode->wordRelScore, keyword);
 
+        // This do-while loop prints the whole file character by character.
         do {
             currentChar = fgetc(filePtr);
             printf("%c", currentChar);
-
         } while (currentChar != EOF);
 
-        fileCount++;
         fclose(filePtr);
     }
-
     puts("\n--------------------------------------------------------------------------------------------------");
 
+    // After printing the files the program prints there is how many relevant file.
     if (fileCount == 0)
-        printf("\nThere is no file containing the keyword '%s'.\n", keyword);
+        printf("There is no file containing the keyword '%s'.\n", keyword);
     else if (fileCount == 1)
-        printf("\nThere is only 1 file containing the keyword '%s'.\n",keyword);
-    else if (fileCount < 5)
-        printf("\nThere is only %d files containing the keyword '%s'.\n", fileCount, keyword);
+        printf("There is only 1 file containing the keyword '%s'.\n",keyword);
+    else
+        printf("There is %d files containing the keyword '%s'.\n", fileCount, keyword);
 }
 
 int main() {
     int counter;
     int fileCount = 0;
+    int relFileCount = 0;
     char keyword[30] = "\0";
     char currentWord[30] = "\0";
     char currentChar;
@@ -272,15 +277,17 @@ int main() {
 
         } while (currentChar != EOF);
 
+        if (counter != 0)
+            relFileCount++;
+
         fileList[i].wordRelScore = counter;
 
         tempNode = createNode(fileList[i].fileName, 300 - fileList[i].wordRelScore);
-        Head = insertToBinomHeap(Head, tempNode);
+        HEAP = unionBinomHeaps(HEAP, tempNode);
 
         fclose(filePtr);
     }
-
-    printMostRelFiveFile(keyword);
+    printMostRelFiveFile(keyword, relFileCount);
 
     return 0;
 }
