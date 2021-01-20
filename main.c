@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
-#include <string.h>
 
 struct node {
     char fileName[50];
@@ -13,6 +12,9 @@ struct node {
     struct node *child;
 };
 
+struct node *Head;
+struct node *Head2;
+
 struct node *createNode(char *fileName, int wordRelScore) {
     struct node *newNode;
     newNode = malloc(sizeof(struct node));
@@ -23,53 +25,59 @@ struct node *createNode(char *fileName, int wordRelScore) {
     return newNode;
 }
 
-void linkBinomHeap(struct node *heap1, struct node *heap2) {
+void linkBinomHeaps(struct node *heap1, struct node *heap2) {
     heap1->parent = heap2;
     heap1->sibling = heap2->child;
     heap2->child = heap1;
-    heap2->degree++;
+    heap2->degree = heap2->degree + 1;
 }
 
-struct node *mergeBinomHeap(struct node *heap1, struct node *heap2) {
-    struct node *mergedHeap = NULL;
-    struct node *node1, *node2;
+struct node *mergeBinomHeaps(struct node *heap1, struct node *heap2) {
+    struct node *tempHeap1, *tempHeap2;
     struct node *tempNode1, *tempNode2;
-    node1 = heap1;
-    node2 = heap2;
+    struct node *head;
 
-    if (node1 != NULL && ((node2 != NULL && (node1->degree <= node2->degree)) || (node2 == NULL))) {
-        mergedHeap = node1;
+    tempHeap1 = heap1;
+    tempHeap2 = heap2;
+
+    if (tempHeap1 != NULL) {
+        if (tempHeap2 != NULL && tempHeap1->degree <= tempHeap2->degree) {
+            head = tempHeap1;
+        } else if (tempHeap2 != NULL && tempHeap1->degree > tempHeap2->degree) {
+            head = tempHeap2;
+        } else {
+            head = tempHeap1;
+        }
     } else {
-        mergedHeap = node2;
+        head = tempHeap2;
     }
 
-    while (node1 != NULL && node2 != NULL) {
-        if (node1->degree < node2->degree) {
-            node1 = node1->sibling;
-        } else if (node1->degree == node2->degree) {
-            tempNode1 = node1->sibling;
-            node1->sibling = node2;
-            node1 = tempNode1;
+    while (tempHeap1 != NULL && tempHeap2 != NULL) {
+        if (tempHeap1->degree < tempHeap2->degree) {
+            tempHeap1 = tempHeap1->sibling;
+        } else if (tempHeap1->degree == tempHeap2->degree) {
+            tempNode1 = tempHeap1->sibling;
+            tempHeap1->sibling = tempHeap2;
+            tempHeap1 = tempNode1;
         } else {
-            tempNode2 = node2->sibling;
-            node2->sibling = node1;
-            node2 = tempNode2;
+            tempNode2 = tempHeap2->sibling;
+            tempHeap2->sibling = tempHeap1;
+            tempHeap2 = tempNode2;
         }
     }
-    return mergedHeap;
+    return head;
 }
 
-
-struct node *unionBinomHeap(struct node *heap1, struct node *heap2) {
+struct node *unionBinomHeaps(struct node *heap1, struct node *heap2) {
     struct node *prevNode, *nextNode, *currentNode;
-    struct node *tempHeap = NULL;
-    tempHeap = mergeBinomHeap(heap1, heap2);
 
-    if (tempHeap == NULL)
-        return tempHeap;
+    Head = mergeBinomHeaps(heap1, heap2);
 
-    prevNode = createNode("\0", 0);
-    currentNode = tempHeap;
+    if (Head == NULL)
+        return Head;
+
+    prevNode = NULL;
+    currentNode = Head;
     nextNode = currentNode->sibling;
 
     while (nextNode != NULL) {
@@ -78,79 +86,159 @@ struct node *unionBinomHeap(struct node *heap1, struct node *heap2) {
             prevNode = currentNode;
             currentNode = nextNode;
         } else {
-            if ((currentNode->wordRelScore <= nextNode->wordRelScore)) {
+            if (currentNode->wordRelScore <= nextNode->wordRelScore) {
                 currentNode->sibling = nextNode->sibling;
-                linkBinomHeap(nextNode, currentNode);
+                linkBinomHeaps(nextNode, currentNode);
             } else {
-                if (prevNode->sibling == NULL) {
-                    tempHeap = nextNode;
+                if (prevNode == NULL) {
+                    Head = nextNode;
                 } else {
                     prevNode->sibling = nextNode;
                 }
-                linkBinomHeap(currentNode, nextNode);
+                linkBinomHeaps(currentNode, nextNode);
                 currentNode = nextNode;
             }
         }
         nextNode = currentNode->sibling;
     }
-    return tempHeap;
+    return Head;
 }
 
-struct node *insertBinomHeap(struct node *heap, struct node *node) {
-    node->parent = node->sibling = node->child = NULL;
-    node->degree = 0;
-    heap = unionBinomHeap(heap, node);
-    return heap;
+struct node *insertToBinomHeap(struct node *head, struct node *node) {
+    struct node *tempNode = NULL;
+    tempNode = node;
+    head = unionBinomHeaps(head, tempNode);
+    return head;
 }
 
-void display(struct node *heap) {
-    struct node *tempNode;
-    if (heap == NULL) {
-        printf("\nThe heap is empty.");
-        return;
-    }
-
-    printf("\nThe root nodes are:\n");
-    tempNode = heap;
-    while (tempNode != NULL) {
-        printf("%d", tempNode->wordRelScore);
-        if (tempNode->sibling != NULL)
-            printf("-->");
-        tempNode = tempNode->sibling;
+void revertList(struct node *heap) {
+    if (heap->sibling != NULL) {
+        revertList(heap->sibling);
+        (heap->sibling)->sibling = heap;
+    } else {
+        Head2 = heap;
     }
 }
 
+struct node *extractMinFromHeap(struct node *heap1) {
+    struct node *minNode = heap1;
+    struct node *tempNode = NULL;
+    struct node *currentNode = heap1;
+    struct node *tempNode2;
+
+    Head2 = NULL;
+
+    if (currentNode == NULL) {
+        printf("\nThere is no node to extract from heap.\n");
+        return currentNode;
+    }
+
+    tempNode2 = minNode;
+
+    while (tempNode2->sibling != NULL) {
+        if ((tempNode2->sibling)->wordRelScore < minNode->wordRelScore) {
+            minNode = tempNode2->sibling;
+            tempNode = tempNode2;
+            currentNode = tempNode2->sibling;
+        }
+        tempNode2 = tempNode2->sibling;
+    }
+
+    if (tempNode == NULL && currentNode->sibling == NULL) {
+        heap1 = NULL;
+    } else if (tempNode == NULL) {
+        heap1 = currentNode->sibling;
+    } else if (tempNode->sibling == NULL) {
+        tempNode = NULL;
+    } else {
+        tempNode->sibling = currentNode->sibling;
+    }
+
+    if (currentNode->child != NULL) {
+        revertList(currentNode->child);
+        (currentNode->child)->sibling = NULL;
+    }
+
+    Head = unionBinomHeaps(heap1, Head2);
+    return currentNode;
+}
+
+void printMostRelFiveFile(char *keyword) {
+    int fileCount = 0;
+    for (int i = 0; i < 5; i++) {
+        struct node *minNode = extractMinFromHeap(Head);
+        char fileName[56] = "files/";
+        char currentChar;
+
+        if (300 - minNode->wordRelScore == 0)
+            continue;
+
+        strcat(fileName, minNode->fileName);
+        FILE *filePtr = fopen(fileName, "r");
+
+        if (filePtr == NULL) {
+            printf("Cannot open file!");
+            exit(0);
+        }
+        puts("\n--------------------------------------------------------------------------------------------------");
+        printf("In the '%s' named file there is %d keyword: '%s'.\n\n", minNode->fileName,
+               300 - minNode->wordRelScore, keyword);
+
+        do {
+            currentChar = fgetc(filePtr);
+            printf("%c", currentChar);
+
+        } while (currentChar != EOF);
+
+        fileCount++;
+        fclose(filePtr);
+    }
+
+    puts("\n--------------------------------------------------------------------------------------------------");
+
+    if (fileCount == 0)
+        printf("\nThere is no file containing the keyword '%s'.\n", keyword);
+    else if (fileCount == 1)
+        printf("\nThere is only 1 file containing the keyword '%s'.\n",keyword);
+    else if (fileCount < 5)
+        printf("\nThere is only %d files containing the keyword '%s'.\n", fileCount, keyword);
+}
 
 int main() {
-
-    struct node *heap = NULL;
-
     int counter;
-    struct node fileList[50];
+    int fileCount = 0;
     char keyword[30] = "\0";
     char currentWord[30] = "\0";
     char currentChar;
 
+    DIR *dirPtr;
     FILE *filePtr;
     struct dirent *dirStr;
-    DIR *dirPtr = opendir("files");
 
     printf("Enter a keyword:");
     scanf("%s", keyword);
 
-    for (int i = 0; i < 50; i++)
-        strcpy(fileList[i].fileName, "\0");
-
+    dirPtr = opendir("files");
     if (dirPtr == NULL) {
         printf("Could not open current directory!");
         return -1;
     }
 
+    for (int i = 0; readdir(dirPtr) != NULL; i++)
+        fileCount++;
+    closedir(dirPtr);
+    struct node fileList[fileCount];
+
+    for (int i = 0; i < fileCount; i++) {
+        strcpy(fileList[i].fileName, "\0");
+    }
+
+    dirPtr = opendir("files");
     for (int i = 0; (dirStr = readdir(dirPtr)) != NULL; i++)
         strcpy(fileList[i].fileName, dirStr->d_name);
     closedir(dirPtr);
 
-    for (int i = 0; strcmp(fileList[i].fileName, "\0") != 0; i++) {
+    for (int i = 0; i < fileCount; i++) {
         struct node *tempNode;
         char fileName[56] = "files/";
         counter = 0;
@@ -165,20 +253,19 @@ int main() {
             exit(0);
         }
 
-        printf("\n%s\n", fileList[i].fileName);
-
         do {
             currentChar = fgetc(filePtr);
 
             if ((currentChar >= 65 && currentChar <= 90) || (currentChar >= 97 && currentChar <= 122)) {
                 strcat(currentWord, (char[2]) {(char) currentChar, '\0'});
-//                printf("%c", currentChar);
             } else {
-                if (currentChar == 39)
+                if (currentChar == 39) {
                     continue;
+                }
 
-                if (stricmp(currentWord, keyword) == 0)
+                if (stricmp(currentWord, keyword) == 0) {
                     counter++;
+                }
 
                 strcpy(currentWord, "\0");
             }
@@ -186,15 +273,15 @@ int main() {
         } while (currentChar != EOF);
 
         fileList[i].wordRelScore = counter;
-        printf("%d", fileList[i].wordRelScore);
 
-        tempNode = createNode(fileList[i].fileName, fileList[i].wordRelScore);
-        heap = insertBinomHeap(heap, tempNode);
+        tempNode = createNode(fileList[i].fileName, 300 - fileList[i].wordRelScore);
+        Head = insertToBinomHeap(Head, tempNode);
 
         fclose(filePtr);
     }
 
-    display(heap);
+    printMostRelFiveFile(keyword);
 
     return 0;
 }
+
