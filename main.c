@@ -305,6 +305,7 @@ int main() {
         if (counter != 0)
             relFileCount++;
 
+        // This line prints the file name and relevancy score.
 //        printf("%s\t%d\n", fileName, counter);
 
         fileList[i].wordRelScore = counter;
