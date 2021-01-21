@@ -305,6 +305,8 @@ int main() {
         if (counter != 0)
             relFileCount++;
 
+//        printf("%s\t%d\n", fileName, counter);
+
         fileList[i].wordRelScore = counter;
 
         // Here, the program creates the node with the fileName and 300 - wordRelScore.
@@ -320,4 +322,3 @@ int main() {
 
     return 0;
 }
-
