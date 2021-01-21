@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
-project(second_project C)
+project(binomial_heaps_project C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(second_project main.c)
+add_executable(binomial_heaps_project main.c)
