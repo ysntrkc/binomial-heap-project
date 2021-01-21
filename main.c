@@ -1,4 +1,4 @@
-// Yasin Tarakçı - 150118055
+// Yasin Tarakçı
 
 #include <stdio.h>
 #include <stdlib.h>
