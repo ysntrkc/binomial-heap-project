@@ -1,4 +1,4 @@
-# Binomial Heaps Project
+# Binomial Heap Project
 
 This is the binomial heaps project for my data structures coures.
 
